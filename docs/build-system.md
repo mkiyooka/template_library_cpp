@@ -42,6 +42,19 @@
 | `coverage`        | テスト実行・プロファイルデータ統合・レポート生成 |
 | `coverage-report` | HTML レポートをブラウザで開く（macOS のみ）      |
 
+### Valgrind（Linux のみ）
+
+| タスク     | 説明                                           |
+| ---------- | ---------------------------------------------- |
+| `valgrind` | ctest memcheck 経由で valgrind を実行（Linux） |
+
+事前に `pixi run build`（デバッグビルド推奨）を済ませてから実行する。
+
+```bash
+pixi run config-debug && pixi run build
+pixi run valgrind
+```
+
 ## CMake プリセット
 
 `CMakePresets.json` で以下のプリセットを定義している。
@@ -66,7 +79,7 @@ ctest --preset=release
 
 - `cmake/`
     - `local-or-fetch.cmake` — `add_external_package()` ヘルパー。`third_party/<名前>` があればローカルを使い、なければ FetchContent でダウンロードする
-    - `dependencies-app.cmake` — アプリケーション用サードパーティライブラリの定義
+    - `dependencies-lib.cmake` — メインライブラリ用サードパーティライブラリの定義
     - `dependencies-test.cmake` — テスト・ベンチマーク用ライブラリの定義
     - `coverage-flags.cmake` — カバレッジ計測用コンパイルフラグ（`add_subdirectory` より前に include する必要がある）
     - `coverage.cmake` — カバレッジ計測・レポート生成ターゲットの定義
@@ -75,13 +88,26 @@ ctest --preset=release
     - `custom-targets.cmake` — `run-tests`・`show-help` などのカスタムターゲット
     - `collect-fetchcontent-licenses.cmake` — サードパーティライブラリのライセンスファイル収集
 
+## ライブラリのビルド形式
+
+`BUILD_SHARED_LIBS` CMake 変数で共有ライブラリ・静的ライブラリを切り替えられる。
+
+```bash
+# 静的ライブラリ（デフォルト）
+cmake --preset=release
+
+# 共有ライブラリ
+cmake --preset=release -DBUILD_SHARED_LIBS=ON
+```
+
 ## ビルド成果物
 
 ビルド後の主要な成果物は以下の場所に生成される。
 
-- `build/template_cli_cpp` — メインの実行ファイル
-- `build/test_*` — テストバイナリ
-- `build/bench_*` — ベンチマークバイナリ
+- `build/src/libtemplate_library_cpp.a` — 静的ライブラリ（デフォルト）
+- `build/src/libtemplate_library_cpp.dylib` / `.so` — 共有ライブラリ（`BUILD_SHARED_LIBS=ON` 時）
+- `build/tests/test_*` — テストバイナリ
+- `build/benches/bench_*` — ベンチマークバイナリ
 - `compile_commands.json` — LSP / clangd 向けの補完データベース（プロジェクトルートに自動コピーされる）
 
 ## コンパイラ設定
@@ -177,7 +203,7 @@ pixi run typos
 - `third_party/<ライブラリ名>-<バージョン>/` ディレクトリが存在する場合: ローカルのソースを使用
 - ディレクトリが存在しない場合: FetchContent で自動ダウンロード
 
-新しいライブラリを追加する場合は `cmake/dependencies-app.cmake`（または `dependencies-test.cmake`）に以下の形式で追記する。
+新しいライブラリを追加する場合は `cmake/dependencies-lib.cmake`（または `dependencies-test.cmake`）に以下の形式で追記する。
 
 ```cmake
 add_external_package(mylib third_party/mylib-1.0.0

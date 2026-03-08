@@ -32,6 +32,9 @@ libgcc-ng = "==15.1.0"  # GCC runtime library
 libstdcxx-ng = "==15.1.0"  # C++ standard library
 valgrind = "==3.26.0"
 
+[target.linux-64.tasks.valgrind]
+cmd = "ctest --test-dir build -T memcheck --output-on-failure"
+
 [target.linux-64.tasks.asan]
 cmd = """
 cmake --preset=asan &&

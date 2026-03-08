@@ -1,7 +1,6 @@
-# C++ CLI Template
+# C++ Library Template
 
-C++17 CLI アプリケーションのテンプレートプロジェクト。
-CLI11 を使ったサブコマンド構成と、TOML / JSON / YAML 対応の設定システムを備える。
+C++17 ライブラリのテンプレートプロジェクト。
 pixi による再現性の高い開発環境と、カバレッジ計測・コード品質ツールを提供する。
 
 ## 必要条件
@@ -16,10 +15,6 @@ pixi をインストール後、`pixi install` でコンパイラ・ツール類
 pixi run config   # CMake 設定（Release）
 pixi run build    # ビルド
 pixi run test     # テスト実行
-
-# アプリ実行例
-./build/template_cli_cpp add 10 20
-./build/template_cli_cpp --config config/example.toml subtract 15 5
 ```
 
 ## 対応プラットフォーム
@@ -29,25 +24,11 @@ pixi run test     # テスト実行
 | Linux x86-64                  | GCC 15 / Clang 21 | mold（高速リンク） |
 | macOS (Apple Silicon / Intel) | AppleClang        | system             |
 
-## 導入ライブラリ
-
-### アプリケーション
-
-| ライブラリ    | バージョン | 用途                          |
-| ------------- | ---------- | ----------------------------- |
-| CLI11         | 2.5.0      | コマンドライン引数解析        |
-| fmt           | 12.0.0     | 文字列フォーマット            |
-| toml++        | 3.4.0      | TOML 設定ファイル解析         |
-| nlohmann/json | 3.12.0     | JSON / JSONC 設定ファイル解析 |
-| yyjson        | 0.12.0     | 高速 JSON 読み書き            |
-| fkYAML        | 0.4.2      | YAML 設定ファイル解析         |
-| spdlog        | 1.17.0     | ロギング                      |
-
-### テスト・ベンチマーク
+## テスト・ベンチマーク用ライブラリ
 
 | ライブラリ | バージョン | 用途                 |
 | ---------- | ---------- | -------------------- |
-| doctest    | 2.4.11     | テストフレームワーク |
+| doctest    | 2.4.12     | テストフレームワーク |
 | nanobench  | 4.3.11     | マイクロベンチマーク |
 
 ## 主要タスク一覧
@@ -71,91 +52,98 @@ pixi run asan             # 設定 → ビルド → テストをまとめて実
 
 # ---- カバレッジ ----
 pixi run coverage         # 設定 → 計測 → HTML レポート生成（build-coverage/）
-```
 
-### 並列ビルドジョブ数
-
-`cmake --build` は `-j` 未指定の場合、CMake 3.12 以降ではシステムの論理コア数を自動的に使用する。
-ジョブ数を明示したい場合は環境変数 `CMAKE_BUILD_PARALLEL_LEVEL` を設定するか、`-j` オプションを直接渡す。
-
-```bash
-# 環境変数で指定（セッション全体に適用）
-export CMAKE_BUILD_PARALLEL_LEVEL=8
-pixi run build
-
-# pixi タスクに -j を追加して一時的に指定
-cmake --build build -j 4
+# ---- メモリチェック（Linux のみ） ----
+pixi run config-debug && pixi run build
+pixi run valgrind         # ctest memcheck 経由で valgrind を実行
 ```
 
 詳細なビルドシステムの説明は [docs/build-system.md](docs/build-system.md) を参照。
 
-## 設定システム
+## ビルド成果物
 
-CLI 引数・設定ファイル・デフォルト値を統合管理する。
-
-**優先度**: CLI 引数 > 設定ファイル > デフォルト値
-
-対応フォーマット:
-
-| 拡張子           | 形式  | 備考              |
-| ---------------- | ----- | ----------------- |
-| `.toml`          | TOML  |                   |
-| `.json`          | JSONC | `//` コメント対応 |
-| `.yaml` / `.yml` | YAML  |                   |
-
-```bash
-# 設定ファイルを指定して実行
-./build/template_cli_cpp --config config/example.toml add 10 20
-
-# CLI 引数で設定値を上書き（ファイルより優先）
-./build/template_cli_cpp --config config/example.toml --settings.value=99 add 10 20
+```text
+build/
+├── src/
+│   ├── libtemplate_library_cpp.a      # 静的ライブラリ（デフォルト）
+│   └── libtemplate_library_cpp.so     # 共有ライブラリ（BUILD_SHARED_LIBS=ON 時）
+├── tests/
+│   └── test_*                         # テストバイナリ
+└── benches/
+    └── bench_*                        # ベンチマークバイナリ
 ```
 
-`--config` を省略した場合、`config/default.{toml,json,yaml}` を自動探索する（複数存在はエラー）。
+## ライブラリのビルド形式
 
-詳細は [docs/config-system.md](docs/config-system.md) および [docs/config-system-guide.md](docs/config-system-guide.md) を参照。
+`BUILD_SHARED_LIBS` CMake 変数で静的・共有ライブラリを切り替えられる。
+
+```bash
+# 静的ライブラリ（デフォルト）
+cmake --preset=release
+cmake --build build
+
+# 共有ライブラリ
+cmake --preset=release -DBUILD_SHARED_LIBS=ON
+cmake --build build
+```
+
+## ライブラリの利用方法
+
+### 1. ビルド済みライブラリをリンクする
+
+ビルド後の成果物を直接使う場合：
+
+```cmake
+# CMakeLists.txt（利用側）
+add_executable(my_app main.cpp)
+
+target_include_directories(my_app PRIVATE /path/to/template_library_cpp/include)
+target_link_libraries(my_app PRIVATE /path/to/template_library_cpp/build/src/libtemplate_library_cpp.a)
+```
+
+### 2. FetchContent で取得する
+
+利用側の CMakeLists.txt に追加するだけでビルド・リンクまで自動化される。
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    template_library_cpp
+    GIT_REPOSITORY https://github.com/<your-org>/template_library_cpp.git
+    GIT_TAG        main  # またはタグ・コミットハッシュ
+)
+FetchContent_MakeAvailable(template_library_cpp)
+
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE template_library_cpp)
+```
+
+`FetchContent_MakeAvailable` 後は `target_link_libraries` にターゲット名 `template_library_cpp` を指定するだけで
+インクルードパスも自動的に設定される。
+
+### 3. add_subdirectory で取得する
+
+ローカルにクローンしてサブディレクトリとして追加する場合：
+
+```cmake
+add_subdirectory(third_party/template_library_cpp)
+
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE template_library_cpp)
+```
 
 ## ディレクトリ構成
 
-- `src/` — アプリケーションソースコード
-    - `command/` — CLI エントリポイント・サブコマンド
-    - `config/` — 設定ファイルの読み込み・管理（内部実装ヘッダを含む）
+- `src/` — ライブラリのソースコード
 - `include/` — 公開ヘッダファイル
-    - `command/` — CLI インターフェース（カスタマイズ対象）
-    - `config/` — 設定システム（カスタマイズ対象）
-    - `template_cli_cpp/` — 汎用ライブラリ層（変更不要）
-        - `logging/` — Logger インターフェース・spdlog ラッパー・ファクトリ
-        - `recording/` — DataRecorder インターフェース・spdlog ラッパー・ファクトリ
-        - `output/` — OutputContext DI コンテキスト
-        - `utility/` — yyjson ラッパー（JsonBuilder）
+    - `template_library_cpp/` — ライブラリの公開インターフェース
+        - `template_library_cpp.hpp` — エントリーポイントヘッダ
 - `tests/` — テストコード（doctest）
-    - `support/` — テスト用ユーティリティ（SpyLogger, TempFile, doctest サンプル）
+    - `support/` — doctest 記述パターンサンプル
 - `benches/` — ベンチマーク（nanobench）
-- `config/` — 設定ファイルサンプル（TOML / JSON / YAML）
-- `output/` — 実行時出力ファイル（git 追跡対象外）
 - `cmake/` — CMake モジュール群
 - `docs/` — ドキュメント
-
-## テンプレートのカスタマイズ
-
-このテンプレートは以下の 2 層に分かれています。
-
-**変更不要（汎用ライブラリ層）**:
-
-- `include/template_cli_cpp/` — logging / recording / output / utility
-
-**変更対象（CLIテンプレート層）**:
-
-- `include/config/` / `src/config/` — 設定スキーマ・フィールド追加
-- `include/command/` / `src/command/` — CLI コマンド・サブコマンド実装
-
-サブコマンド名やフィールド名は `src/command/subcommand.cpp` に集約されており、
-追加・変更の際はこのファイルのみを修正します。
 
 ## ドキュメント
 
 - [docs/build-system.md](docs/build-system.md) — ビルドシステム・開発ツールの詳細
-- [docs/config-system.md](docs/config-system.md) — 設定システムの仕様
-- [docs/config-system-guide.md](docs/config-system-guide.md) — 設定システムの拡張ガイド
-- [docs/output-system.md](docs/output-system.md) — 出力システムの仕様
-- [docs/output-system-guide.md](docs/output-system-guide.md) — 出力システムの拡張ガイド

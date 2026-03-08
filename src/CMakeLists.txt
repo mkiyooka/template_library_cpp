@@ -1,21 +1,13 @@
-# Add subdirectories
-add_subdirectory(command)
-add_subdirectory(config)
-
-# Main executable
-add_executable(cmd main.cpp)
-set_target_properties(cmd PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+# BUILD_SHARED_LIBS=ON で共有ライブラリ、OFF（デフォルト）で静的ライブラリとしてビルドされる
+add_library(template_library_cpp
+    template_library_cpp.cpp
 )
-target_link_libraries(cmd PRIVATE command_lib config_lib)
-
-# プリコンパイル済みヘッダーの設定
-if(USE_PCH)
-    target_precompile_headers(cmd PRIVATE
-        <memory>
-        <string>
-        <CLI/CLI.hpp>
-        <fmt/base.h>
-    )
-    message(STATUS "Precompiled headers enabled for executables")
-endif()
+target_include_directories(template_library_cpp
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+set_target_properties(template_library_cpp PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)

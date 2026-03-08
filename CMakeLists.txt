@@ -10,7 +10,7 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-project(template_cli_cpp
+project(template_library_cpp
     VERSION 0.1.0
     LANGUAGES CXX C
 )
@@ -104,15 +104,12 @@ include(cmake/sanitizer-flags.cmake)
 # サードパーティライブラリの導入
 include(FetchContent)
 include(cmake/local-or-fetch.cmake)
-include(cmake/dependencies-app.cmake)
+include(cmake/dependencies-lib.cmake)
 include(cmake/dependencies-test.cmake)
 
 # ==============================================================================
-# Main Application - メインCLIアプリケーション
+# Library - メインライブラリ
 # ==============================================================================
-
-# アプリバイナリは build/ 直下
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # メインのソースディレクトリ
 add_subdirectory(src)
