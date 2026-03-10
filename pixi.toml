@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "cpp-dev"
 version = "0.1.0"
 description = "C++ Development Environment"
@@ -30,7 +30,11 @@ gxx = "==15.1.0"  # G++ compiler
 mold = "==2.40.4"
 libgcc-ng = "==15.1.0"  # GCC runtime library
 libstdcxx-ng = "==15.1.0"  # C++ standard library
-valgrind = "==3.26.0"
+compiler-rt_linux-64 = "==21.1.1"  # Clang runtime libraries (ASan, coverage, etc.)
+# Note: valgrind is NOT listed here.
+# conda-forge valgrind cannot inspect binaries that use the system dynamic linker
+# (/lib64/ld-linux-x86-64.so.2). Install valgrind via the system package manager instead:
+#   sudo apt-get install valgrind   # Ubuntu/Debian
 
 [target.linux-64.tasks.valgrind]
 cmd = "ctest --test-dir build -T memcheck --output-on-failure"
@@ -41,7 +45,7 @@ cmake --preset=asan &&
 cmake --build build-asan &&
 ctest --test-dir build-asan
 """
-env = { CC = "clang", CXX = "clang++" }
+env = { CC = "gcc", CXX = "g++" }
 
 [target.linux-64.tasks.coverage]
 cmd = """
@@ -67,7 +71,11 @@ config-debug = "cmake --preset=debug"
 build = "cmake --build build"
 test = "ctest --test-dir build"
 
-clean = "cmake --build build --target clean && rm -rf build-asan build-coverage"
+clean = """
+cmake --build build --target clean || true &&
+cmake --build build-asan --target clean || true &&
+cmake --build build-coverage --target clean || true
+"""
 
 # ---- quality ----
 format = "cmake --build build --target format"

@@ -9,6 +9,15 @@ pixi による再現性の高い開発環境と、カバレッジ計測・コー
 
 pixi をインストール後、`pixi install` でコンパイラ・ツール類が自動セットアップされる。
 
+### Linux: valgrind のインストール
+
+conda-forge の valgrind はシステムの動的リンカ（`/lib64/ld-linux-x86-64.so.2`）を使うバイナリを
+検査できないため、システムパッケージマネージャでインストールする。
+
+```bash
+sudo apt-get install valgrind   # Ubuntu/Debian
+```
+
 ## クイックスタート
 
 ```bash

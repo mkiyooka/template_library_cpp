@@ -23,7 +23,7 @@
 | `config-debug` | `cmake --preset=debug`               | デバッグビルドの CMake 設定 |
 | `build`        | `cmake --build build -j 8`           | ビルド（8並列）             |
 | `test`         | `ctest --test-dir build`             | テスト実行                  |
-| `clean`        | `cmake --build build --target clean` | ビルド成果物の削除          |
+| `clean`        | build / build-asan / build-coverage を `--target clean`（ディレクトリ不在でもエラーなし） | ビルド成果物の削除 |
 
 ### コード品質
 
@@ -55,16 +55,25 @@ pixi run config-debug && pixi run build
 pixi run valgrind
 ```
 
+> **注意:** conda-forge の valgrind はシステムの動的リンカ（`/lib64/ld-linux-x86-64.so.2`）を
+> 使うバイナリを検査できないため、pixi 依存には含めていない。
+> システムパッケージマネージャでインストールする。
+>
+> ```bash
+> sudo apt-get install valgrind   # Ubuntu/Debian
+> ```
+
 ## CMake プリセット
 
 `CMakePresets.json` で以下のプリセットを定義している。
 
-| プリセット       | ビルドタイプ   | ビルドディレクトリ | 説明                       |
-| ---------------- | -------------- | ------------------ | -------------------------- |
-| `release`        | Release        | `build/`           | 最適化ビルド               |
-| `debug`          | Debug          | `build/`           | デバッグシンボル付きビルド |
-| `relwithdebinfo` | RelWithDebInfo | `build/`           | 最適化 + デバッグシンボル  |
-| `coverage`       | Debug          | `build-coverage/`  | カバレッジ計測用ビルド     |
+| プリセット       | ビルドタイプ   | ビルドディレクトリ | 説明                                  |
+| ---------------- | -------------- | ------------------ | ------------------------------------- |
+| `release`        | Release        | `build/`           | 最適化ビルド                          |
+| `debug`          | Debug          | `build/`           | デバッグシンボル付きビルド            |
+| `relwithdebinfo` | RelWithDebInfo | `build/`           | 最適化 + デバッグシンボル             |
+| `asan`           | Debug          | `build-asan/`      | ASan + UBSan サニタイザビルド         |
+| `coverage`       | Debug          | `build-coverage/`  | カバレッジ計測用ビルド                |
 
 ```bash
 # プリセットを直接使う場合
@@ -127,6 +136,11 @@ cmake --preset=release -DLINKER=lld
 ```
 
 AppleClang は `-fuse-ld=` オプション非対応のためリンカ切り替えは行われない。
+
+### ar（アーカイバ）
+
+conda-forge の GCC パッケージは `ar` シンボリックリンクを作成しないため、CMake 起動時に
+`gcc-ar` / `llvm-ar` / `x86_64-conda-linux-gnu-ar` の順で自動検出し `CMAKE_AR` に設定する。
 
 ### ccache
 
@@ -233,4 +247,6 @@ cmake --build build --target collect-licenses
 
 - コンパイラ: GCC 15（デフォルト）または Clang 21
 - リンカ: mold（高速リンク）
-- カバレッジビルドは `[target.linux-64.tasks.config-coverage]` で `CC=clang CXX=clang++` を明示指定
+- **ASan/UBSan**: GCC で実行（Clang 21 に ASan ランタイムが含まれないため `CC=gcc CXX=g++` を指定）
+- **カバレッジ**: Clang で実行（`CC=clang CXX=clang++` を指定）。`compiler-rt_linux-64` で ASan/coverage ランタイムを提供
+- **valgrind**: pixi 依存には含めない。`sudo apt-get install valgrind` でシステムにインストールする
