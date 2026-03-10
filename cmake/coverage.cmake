@@ -34,10 +34,10 @@ set(COVERAGE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/coverage-html")
 set(COVERAGE_PROFDATA   "${CMAKE_BINARY_DIR}/coverage.profdata")
 
 # llvm-cov に渡すオブジェクトフラグ（1つ目がメイン、2つ目以降は --object=）
-set(_FIRST_BIN $<TARGET_FILE:test_config_manager>)
+set(_FIRST_BIN $<TARGET_FILE:test_template_library_cpp>)
 set(_LLVM_COV_OBJECT_FLAGS
     "--object=$<TARGET_FILE:test_doctest_usage>"
-    "--object=$<TARGET_FILE:test_yyjson_wrapper>"
+    "--object=$<TARGET_FILE:calculator_demo>"
 )
 
 add_custom_target(coverage
@@ -48,13 +48,13 @@ add_custom_target(coverage
     COMMAND ${CMAKE_COMMAND} -E echo "=== Running tests with coverage instrumentation ==="
     COMMAND ${CMAKE_COMMAND} -E env
         "LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage-%p.profraw"
-        $<TARGET_FILE:test_config_manager>
+        $<TARGET_FILE:test_template_library_cpp>
     COMMAND ${CMAKE_COMMAND} -E env
         "LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage-%p.profraw"
         $<TARGET_FILE:test_doctest_usage>
     COMMAND ${CMAKE_COMMAND} -E env
         "LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage-%p.profraw"
-        $<TARGET_FILE:test_yyjson_wrapper>
+        $<TARGET_FILE:calculator_demo>
     # 3. プロファイルデータを統合
     COMMAND ${CMAKE_COMMAND} -E echo "=== Merging profile data ==="
     COMMAND sh -c "${LLVM_PROFDATA_EXE} merge --sparse '${CMAKE_BINARY_DIR}/coverage-'*.profraw -o '${COVERAGE_PROFDATA}'"
@@ -64,7 +64,7 @@ add_custom_target(coverage
         ${_FIRST_BIN}
         ${_LLVM_COV_OBJECT_FLAGS}
         --instr-profile=${COVERAGE_PROFDATA}
-        "--ignore-filename-regex=.*/build-coverage/.*|.*/third_party/.*|.*/.pixi/.*"
+        "--ignore-filename-regex=.*/build-coverage/.*|.*/third_party/.*|.*/.pixi/.*|.*/tests/.*|.*/benches/.*"
     # 5. HTML レポート生成
     COMMAND ${CMAKE_COMMAND} -E echo "=== Generating HTML report: ${COVERAGE_OUTPUT_DIR} ==="
     COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_OUTPUT_DIR}
@@ -74,12 +74,12 @@ add_custom_target(coverage
         --instr-profile=${COVERAGE_PROFDATA}
         --format=html
         --output-dir=${COVERAGE_OUTPUT_DIR}
-        "--ignore-filename-regex=.*/build-coverage/.*|.*/third_party/.*|.*/.pixi/.*"
+        "--ignore-filename-regex=.*/build-coverage/.*|.*/third_party/.*|.*/.pixi/.*|.*/tests/.*|.*/benches/.*"
     COMMAND ${CMAKE_COMMAND} -E echo "=== HTML report: ${COVERAGE_OUTPUT_DIR}/index.html ==="
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running coverage analysis"
     VERBATIM
-    DEPENDS test_config_manager test_doctest_usage test_yyjson_wrapper
+    DEPENDS test_template_library_cpp test_doctest_usage calculator_demo
 )
 
 # HTML レポートのパスを表示するターゲット

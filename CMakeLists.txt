@@ -145,6 +145,7 @@ endif()
 enable_testing()
 
 add_subdirectory(tests)
+add_subdirectory(examples)
 add_subdirectory(benches)
 
 # カスタムターゲット

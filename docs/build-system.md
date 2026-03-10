@@ -167,6 +167,51 @@ pixi run coverage          # テスト実行 → レポート生成
 pixi run coverage-report   # ブラウザで HTML レポートを開く（macOS のみ）
 ```
 
+### カバレッジ対象の管理
+
+カバレッジレポートに含めるか否かは `cmake/coverage.cmake` の `--ignore-filename-regex` で制御する。
+
+#### 新しいバイナリをカバレッジに含める
+
+`coverage.cmake` の `_LLVM_COV_OBJECT_FLAGS` と `DEPENDS`・実行コマンドに追記する。
+
+```cmake
+# カバレッジ計測対象のバイナリを追加する場合
+set(_LLVM_COV_OBJECT_FLAGS
+    "--object=$<TARGET_FILE:test_doctest_usage>"
+    "--object=$<TARGET_FILE:calculator_demo>"
+    "--object=$<TARGET_FILE:my_new_target>"   # ← 追加
+)
+
+add_custom_target(coverage
+    ...
+    COMMAND ${CMAKE_COMMAND} -E env
+        "LLVM_PROFILE_FILE=..."
+        $<TARGET_FILE:my_new_target>          # ← 実行コマンドも追加
+    ...
+    DEPENDS ... my_new_target                 # ← DEPENDS にも追加
+)
+```
+
+#### ディレクトリをカバレッジから除外する
+
+`--ignore-filename-regex` に正規表現を `|` で追記する。
+
+```cmake
+"--ignore-filename-regex=.*/build-coverage/.*|.*/third_party/.*|.*/.pixi/.*|.*/tests/.*|.*/benches/.*|.*/my_dir/.*"
+#                                                                                                      ^^^^^^^^^^^^^^ 追加
+```
+
+現在の除外対象：
+
+| パターン | 理由 |
+| --- | --- |
+| `.*/build-coverage/.*` | ビルドディレクトリ（FetchContent の外部ライブラリなど） |
+| `.*/third_party/.*` | ローカルキャッシュのサードパーティライブラリ |
+| `.*/.pixi/.*` | pixi 環境のシステムヘッダ・ライブラリ |
+| `.*/tests/.*` | テストコード自体（計測対象は製品コードのみ） |
+| `.*/benches/.*` | ベンチマークコード |
+
 ### 注意事項
 
 - カバレッジビルドは `build-coverage/` を使用する（`build/` とは別）
