@@ -5,7 +5,7 @@ pixi による再現性の高い開発環境と、カバレッジ計測・コー
 
 ## 必要条件
 
-- [pixi](https://prefix.dev/docs/pixi/overview)
+- [pixi](https://prefix.dev/)
 
 pixi をインストール後、`pixi install` でコンパイラ・ツール類が自動セットアップされる。
 
