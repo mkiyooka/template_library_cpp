@@ -124,11 +124,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(template_library_cpp)
 
 add_executable(my_app main.cpp)
-target_link_libraries(my_app PRIVATE template_library_cpp)
+target_link_libraries(my_app PRIVATE template_library_cpp::template_library_cpp)
 ```
 
-`FetchContent_MakeAvailable` 後は `target_link_libraries` にターゲット名 `template_library_cpp` を指定するだけで
-インクルードパスも自動的に設定される。
+`FetchContent_MakeAvailable` 後は `target_link_libraries` にエイリアスターゲット名
+`template_library_cpp::template_library_cpp` を指定するだけでインクルードパスも自動的に設定される。
 
 ### 3. add_subdirectory で取得する
 
@@ -138,7 +138,7 @@ target_link_libraries(my_app PRIVATE template_library_cpp)
 add_subdirectory(third_party/template_library_cpp)
 
 add_executable(my_app main.cpp)
-target_link_libraries(my_app PRIVATE template_library_cpp)
+target_link_libraries(my_app PRIVATE template_library_cpp::template_library_cpp)
 ```
 
 ## ディレクトリ構成

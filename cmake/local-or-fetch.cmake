@@ -30,7 +30,7 @@ function(add_external_package LIBRARY_NAME LOCAL_PATH)
     set(multiValueArgs "")
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(FULL_LOCAL_PATH "${CMAKE_SOURCE_DIR}/${LOCAL_PATH}")
+    set(FULL_LOCAL_PATH "${PROJECT_SOURCE_DIR}/${LOCAL_PATH}")
     if(EXISTS ${FULL_LOCAL_PATH})
         message(STATUS "Using local ${LIBRARY_NAME} from ${FULL_LOCAL_PATH}")
         FetchContent_Declare(${LIBRARY_NAME}

@@ -15,6 +15,12 @@ project(template_library_cpp
     LANGUAGES CXX C
 )
 
+# スタンドアロンビルド判定（FetchContent で取り込まれた場合は OFF）
+set(_TEMPLATE_LIBRARY_CPP_STANDALONE OFF)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(_TEMPLATE_LIBRARY_CPP_STANDALONE ON)
+endif()
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -97,13 +103,15 @@ endif()
 
 # compile_commands.json 生成とプロジェクトルートディレクトリへの自動配置
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_custom_target(copy_compile_commands ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-        ${CMAKE_BINARY_DIR}/compile_commands.json 
-        ${CMAKE_SOURCE_DIR}/compile_commands.json
-    DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
-    COMMENT "Copying compile_commands.json to project root"
-)
+if(_TEMPLATE_LIBRARY_CPP_STANDALONE)
+    add_custom_target(copy_compile_commands ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/compile_commands.json
+        DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+        COMMENT "Copying compile_commands.json to project root"
+    )
+endif()
 
 include_directories(include)
 
@@ -138,37 +146,39 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 endif()
 
 # ==============================================================================
-# Development utilities
+# Development utilities（スタンドアロンビルド時のみ）
 # ==============================================================================
 
-# Enable testing for CTest
-enable_testing()
+if(_TEMPLATE_LIBRARY_CPP_STANDALONE)
+    # Enable testing for CTest
+    enable_testing()
 
-add_subdirectory(tests)
-add_subdirectory(examples)
-add_subdirectory(benches)
+    add_subdirectory(tests)
+    add_subdirectory(examples)
+    add_subdirectory(benches)
 
-# カスタムターゲット
-include(cmake/custom-targets.cmake)
+    # カスタムターゲット
+    include(cmake/custom-targets.cmake)
 
-# カバレッジ
-include(cmake/coverage.cmake)
+    # カバレッジ
+    include(cmake/coverage.cmake)
 
-# コード品質ツール
-include(cmake/quality-setup.cmake)
+    # コード品質ツール
+    include(cmake/quality-setup.cmake)
 
-# ==============================================================================
-# Third-Party License Aggregation
-# ==============================================================================
+    # ==============================================================================
+    # Third-Party License Aggregation
+    # ==============================================================================
 
-# サードパーティライブラリのライセンス集約
-add_custom_target(collect-licenses
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/third_party_licenses"
+    # サードパーティライブラリのライセンス集約
+    add_custom_target(collect-licenses
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/third_party_licenses"
 
-    # FetchContentで取得したライブラリのライセンス
-    COMMAND ${CMAKE_COMMAND} -E echo "Collecting FetchContent package licenses..."
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/collect-fetchcontent-licenses.cmake
+        # FetchContentで取得したライブラリのライセンス
+        COMMAND ${CMAKE_COMMAND} -E echo "Collecting FetchContent package licenses..."
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/collect-fetchcontent-licenses.cmake
 
-    COMMENT "Collecting third-party library licenses"
-)
+        COMMENT "Collecting third-party library licenses"
+    )
+endif()
 

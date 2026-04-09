@@ -255,6 +255,30 @@ cmake --build build --target run-cppcheck-verbose  # 詳細出力
 pixi run typos
 ```
 
+## FetchContent での利用
+
+このライブラリは上位プロジェクトから `FetchContent_MakeAvailable()` で取り込める。
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    template_library_cpp
+    GIT_REPOSITORY https://github.com/<your-org>/template_library_cpp.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(template_library_cpp)
+
+target_link_libraries(my_app PRIVATE template_library_cpp::template_library_cpp)
+```
+
+FetchContent で取り込まれた場合、以下はスキップされる（上位プロジェクトとの衝突を防ぐため）：
+
+- テスト・ベンチマーク・サンプル（`tests/` / `benches/` / `examples/`）
+- `copy_compile_commands` / `run-tests` / `show-help` などのカスタムターゲット
+- clang-format / clang-tidy / cppcheck 品質ツールターゲット
+- カバレッジターゲット
+- ライセンス収集ターゲット
+
 ## サードパーティライブラリの管理
 
 `add_external_package()` ヘルパー（`cmake/local-or-fetch.cmake`）を使って依存関係を管理する。
