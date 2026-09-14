@@ -11,4 +11,5 @@ target_include_directories(bench_template_library_cpp PRIVATE
 target_link_libraries(bench_template_library_cpp PRIVATE
     template_library_cpp
     nanobench::nanobench
+    PRIVATE sanitizer_flags
 )

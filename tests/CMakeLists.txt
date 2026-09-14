@@ -8,7 +8,7 @@ add_executable(test_doctest_usage
 target_include_directories(test_doctest_usage PRIVATE
     ${PROJECT_SOURCE_DIR}/tests
 )
-target_link_libraries(test_doctest_usage PRIVATE doctest::doctest)
+target_link_libraries(test_doctest_usage PRIVATE doctest::doctest PRIVATE sanitizer_flags)
 add_test(
     NAME test_doctest_usage
     COMMAND $<TARGET_FILE:test_doctest_usage>
@@ -24,6 +24,7 @@ target_include_directories(test_template_library_cpp PRIVATE
 target_link_libraries(test_template_library_cpp PRIVATE
     template_library_cpp
     doctest::doctest
+    PRIVATE sanitizer_flags
 )
 add_test(
     NAME test_template_library_cpp

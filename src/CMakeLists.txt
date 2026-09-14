@@ -2,6 +2,7 @@
 add_library(template_library_cpp
     template_library_cpp.cpp
 )
+target_link_libraries(template_library_cpp PRIVATE sanitizer_flags)
 target_include_directories(template_library_cpp
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
